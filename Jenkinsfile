@@ -2,47 +2,48 @@ pipeline {
     agent any
 
     environment {
-        APP_DIR = "/var/www/calculator"
-        NODE_ENV = "production"
+        IMAGE_NAME = "calculator-app"
+        CONTAINER_NAME = "calculator-container"
+        PORT = "5000"
     }
 
     stages {
         stage('Clone Repository') {
             steps {
-                // Jenkins will clone your repo automatically
-                echo 'Code checked out.'
+                echo '📦 Cloning repository...'
+                checkout scm
             }
         }
 
-        stage('Install Dependencies') {
+        stage('Build Docker Image') {
             steps {
-                sh 'npm install'
+                echo '🐳 Building Docker image...'
+                sh 'docker build -t $IMAGE_NAME .'
             }
         }
 
-        stage('Deploy') {
+        stage('Run Docker Container') {
             steps {
-                script {
-                    sh """
-                    sudo mkdir -p $APP_DIR
-                    sudo cp -r * $APP_DIR
-                    cd $APP_DIR
-                    sudo npm install
-                    sudo pm2 delete calculator || true
-                    sudo pm2 start server.js --name calculator
-                    sudo pm2 save
-                    """
-                }
+                echo '🚀 Deploying container...'
+                sh '''
+                # Stop and remove old container if it exists
+                if [ "$(docker ps -aq -f name=$CONTAINER_NAME)" ]; then
+                    docker rm -f $CONTAINER_NAME
+                fi
+
+                # Run the new container
+                docker run -d -p $PORT:5000 --name $CONTAINER_NAME $IMAGE_NAME
+                '''
             }
         }
     }
 
     post {
         success {
-            echo 'Deployment successful!'
+            echo '✅ Deployment successful! Application running on port 5000.'
         }
         failure {
-            echo 'Deployment failed.'
+            echo '❌ Deployment failed!'
         }
     }
 }
