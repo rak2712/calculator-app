@@ -26,13 +26,37 @@ pipeline {
             steps {
                 echo '🚀 Deploying container...'
                 sh '''
+                echo "🧹 Cleaning up old containers..."
                 # Stop and remove old container if it exists
                 if [ "$(docker ps -aq -f name=$CONTAINER_NAME)" ]; then
                     docker rm -f $CONTAINER_NAME
                 fi
 
-                # Run the new container
-                docker run -d -p $PORT:5000 --name $CONTAINER_NAME $IMAGE_NAME
+                echo "🏃‍♂️ Starting new container with auto-restart enabled..."
+                # Run new container with restart policy
+                docker run -d \
+                    --restart unless-stopped \
+                    -p $PORT:5000 \
+                    --name $CONTAINER_NAME \
+                    $IMAGE_NAME
+
+                echo "✅ Container started successfully."
+                docker ps --filter "name=$CONTAINER_NAME"
+                '''
+            }
+        }
+
+        stage('Check Application Health') {
+            steps {
+                echo '🔍 Checking if application is running...'
+                sh '''
+                sleep 5
+                if curl -s http://localhost:$PORT > /dev/null; then
+                    echo "✅ Application is responding on port $PORT."
+                else
+                    echo "⚠️ Application did not respond on port $PORT."
+                    exit 1
+                fi
                 '''
             }
         }
@@ -40,10 +64,10 @@ pipeline {
 
     post {
         success {
-            echo '✅ Deployment successful! Application running on port 5000.'
+            echo '✅ Deployment successful! Application is up and will auto-restart on reboot.'
         }
         failure {
-            echo '❌ Deployment failed!'
+            echo '❌ Deployment failed! Check Docker logs or Jenkins console for details.'
         }
     }
 }
