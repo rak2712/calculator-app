@@ -31,3 +31,10 @@ The project demonstrates a **fully automated deployment pipeline** — from code
 
 ## 🗂️ Project Structure
 
+calculator-app/
+│
+├── calculator.html # Frontend UI (simple calculator)
+├── server.js # Node.js server for backend logic
+├── Dockerfile # Defines how the app runs inside Docker
+└── Jenkinsfile # Jenkins pipeline for CI/CD automation
+
