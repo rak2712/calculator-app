@@ -36,7 +36,7 @@ pipeline {
                 # Run new container with restart policy
                 docker run -d \
                     --restart unless-stopped \
-                    -p $PORT:5000 \
+                    -p $PORT:3000 \
                     --name $CONTAINER_NAME \
                     $IMAGE_NAME
 
